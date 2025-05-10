@@ -1,0 +1,18 @@
+import pygame
+
+# Cấu hình chung cho game
+TILE_SIZE = 48
+GRID_WIDTH = 20
+GRID_HEIGHT = 15
+SCREEN_WIDTH = TILE_SIZE * GRID_WIDTH
+SCREEN_HEIGHT = TILE_SIZE * GRID_HEIGHT
+
+
+# Màu sắc
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (100, 100, 100)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+MAGENTA = (255, 0, 255)

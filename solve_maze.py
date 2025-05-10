@@ -43,18 +43,40 @@ def bfs(maze, start):
     elapsed_time = time.perf_counter() - start_time
     return path, visited_nodes, generated_nodes, elapsed_time
 
+def get_tile_cost(tile, has_sword):
+    if tile == 0:  # đường thường
+        return 1
+    elif tile == 3:  # chìa khóa
+        return 1
+    elif tile == 5:  # kiếm
+        return 1
+    elif tile == 6 or tile == 7:  # quái vật
+        return 100 if not has_sword else 5
+    else:
+        return 1  # mặc định
+
 def a_start(maze, start, goal):
     ROWS, COLS = len(maze), len(maze[0])
     heap = []
-    heappush(heap, (0, start, False, False, []))
+    heappush(heap, (0, 0, start, False, False, []))
     visited = set()
     visited_nodes = 0
     generated_nodes = 1
+    cost_so_far = {}
     start_time = time.perf_counter()
 
+
     while heap:
-        f, (r, c), has_key, has_sword, path = heappop(heap)
-        path.append((r, c))
+        f, g, (r, c), has_key, has_sword, path = heappop(heap)
+        state = (r, c, has_key, has_sword)
+        if state in visited:
+            continue
+        if state in cost_so_far and g >= cost_so_far[state]:
+            continue
+        visited.add(state)
+        cost_so_far[state] = g
+        visited_nodes += 1
+
         tile = maze[r][c]
         if tile == 3:  
             has_key = True
@@ -62,21 +84,20 @@ def a_start(maze, start, goal):
             has_sword = True
         if tile == 4 and has_key:  
             elapsed_time = time.perf_counter() - start_time
-            return path, visited_nodes, generated_nodes, elapsed_time
-        state = (r, c, has_key, has_sword)
-        if state in visited:
-            continue
-        visited.add(state)
-        visited_nodes += 1
+            return path + [(r, c)], visited_nodes, generated_nodes, elapsed_time
 
         for dr, dc in directions:
             nr, nc = r + dr, c + dc
             if 0 <= nr < ROWS and 0 <= nc < COLS:
                 ntile = maze[nr][nc]
-                if ntile in [0, 3, 5] or (has_key and ntile == 4) or (has_sword and ntile in [6, 7]):
-                    g = len(path) + 1
+                if ntile in [0, 3, 5] or (has_key and ntile == 4) or (has_sword and ntile in [6, 7, 8]):
+                    step_cost = get_tile_cost(ntile, has_sword)
+                    new_g = g + step_cost
                     h = manhattan_distance((nr, nc), goal)
-                    heappush(heap, (g + h, (nr, nc), has_key, has_sword, path[:]))
+                    new_state = (nr, nc, has_key, has_sword)
+                    if new_state in cost_so_far and new_g >= cost_so_far[new_state]:
+                        continue
+                    heappush(heap, (new_g + h, new_g, (nr, nc), has_key, has_sword, path + [(r, c)]))
                     generated_nodes += 1
 
     elapsed_time = time.perf_counter() - start_time
@@ -360,12 +381,14 @@ def get_path_from_q_table(q_table, maze, start, goal):
 def get_solution(maze, algorithm):
     ROWS, COLS = len(maze), len(maze[0])
     start, goal = None, None
+
     for r in range(ROWS):
         for c in range(COLS):
             if maze[r][c] == 2:
                 start = (r, c)
             elif maze[r][c] == 4:
                 goal = (r, c)   
+
     if algorithm == "BFS":
         return bfs(maze, start)
     elif algorithm == "A*":
@@ -381,42 +404,30 @@ def get_solution(maze, algorithm):
         path = get_path_from_q_table(q_table, maze, start, goal)
         return path, visited_nodes, generated_nodes, elapsed_time
 
-# def main():
-#     # maze = [
-#     #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-#     #     [2, 0, 0, 0, 0, 3, 0, 0, 6, 1],
-#     #     [1, 0, 1, 1, 0, 5, 0, 1, 4, 1],
-#     #     [1, 0, 0, 0, 0, 6, 0, 7, 0, 1],
-#     #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-#     # ]
-#     # maze = [
-#     #     [2, 0, 0, 3],
-#     #     [1, 0, 1, 0],
-#     #     [4, 0, 0, 1]
-#     # ]
-#     maze = [
-#         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-#         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 1],
-#         [1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1],
-#         [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-#         [1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1],
-#         [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1],
-#         [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1],
-#         [1, 0, 0, 4, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-#         [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-#         [1, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-#         [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
-#         [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1],
-#         [1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1],
-#         [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-#         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-#     ]
-#     algorithm = "Q-Learning"  # Change this to test different algorithms
-#     path, visited_nodes, generated_nodes, elapsed_time = get_solution(maze, algorithm)
-#     print("Visted nodes:", visited_nodes)
-#     print("Generated nodes:", generated_nodes)
-#     print("Elapsed time:", elapsed_time)
-#     print("Path:", path)
+def main():
+    maze = [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 2, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 1, 3, 0, 5, 0, 0, 1, 1],
+        [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 3, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 10, 1, 7, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 3, 0, 1, 7, 0, 3, 1, 0, 0, 0, 1, 1],
+        [1, 0, 1, 0, 1, 7, 1, 7, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 0, 0, 0, 1, 0, 1, 7, 1, 0, 1, 0, 1, 0, 1, 3, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1], 
+        [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+        [1, 3, 0, 0, 1, 0, 1, 0, 1, 0, 3, 0, 1, 0, 1, 0, 0, 7, 0, 1],
+        [1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 9, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 7, 0, 0, 0, 3, 0, 4, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ]   
+    algorithm = "A*"  # Change this to test different algorithms
+    path, visited_nodes, generated_nodes, elapsed_time = get_solution(maze, algorithm)
+    print("Visted nodes:", visited_nodes)
+    print("Generated nodes:", generated_nodes)
+    print("Elapsed time:", elapsed_time)
+    print("Path:", path)
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

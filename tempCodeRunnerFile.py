@@ -1,2 +1,2 @@
 
-            #     nr, nc = r, c
+        super().__init__()

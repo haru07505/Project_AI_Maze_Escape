@@ -1,15 +1,19 @@
+import numpy as np
 import pygame
 import pytmx
 import objects
 from solve_maze import get_solution
 from tkinter import messagebox
-import time
+import time, imageio.v2 as imageio, threading
 
 class Game:
     def __init__(self, file_path, algorithm, width):
+        super().__init__()
+        self.name = file_path
+        self.alg = algorithm
         self.running = False  # Ban đầu game chưa chạy
         self.WIDTH = width
-        self.HEIGHT = 850
+        self.HEIGHT = 864
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption("Escape Game")
         if width == 720:
@@ -18,6 +22,7 @@ class Game:
             self.map_matrix = [[0 for _ in range(20)] for _ in range(20)]
         self.tmx_data = pytmx.load_pygame(file_path)
         self.door = pygame.image.load("door.png")
+        self.portals = {}
         self.tile_width = self.tmx_data.tilewidth
         self.tile_height = self.tmx_data.tileheight
         self.map_width = self.tmx_data.width * self.tile_width
@@ -29,11 +34,13 @@ class Game:
         self.collected_key = False
         self.finised_game = False
         self.has_sword = False
-        self.hard = False
+        self.medium = False
         self.load_objects()
         self.load_matrix_map()
         self.font = pygame.font.SysFont('Arial', 18)
         self.sword_timer = False
+
+        self.gif_frames = []
 
     def load_objects(self):
         """ Xử lý objects layer và cập nhật ma trận """
@@ -54,13 +61,27 @@ class Game:
                     elif obj.name == "bat":
                         self.map_matrix[grid_y][grid_x] = 6
                     elif obj.name == "skeleton":
-                        self.map_matrix[grid_y][grid_x] = 7
+                        self.map_matrix[grid_y][grid_x] = 7                
+
+
     def load_matrix_map(self):
         for layer_index, layer in enumerate(self.tmx_data.visible_layers):
             if isinstance(layer, pytmx.TiledTileLayer) and layer_index == 1 :
                 for x, y, gid in layer:                
                     if gid != 0:
                         self.map_matrix[y][x] = 1  # Đánh dấu vật cản
+
+    def save_mp4_threaded(self):
+        def save():
+            if self.gif_frames:
+                filename = f"gameplay_a_start.mp4"
+                with imageio.get_writer(filename, fps=24, codec='libx264') as writer:
+                    for frame in self.gif_frames:
+                        writer.append_data(frame)
+                print(f"Saved MP4: {filename}")
+        #import threading
+        threading.Thread(target=save, daemon=True).start()
+
     def run(self):
         #current_step = 0
         """ Vòng lặp game """
@@ -75,13 +96,14 @@ class Game:
                 elif cell == 5:
                     self.sword = objects.Sword((x * self.tile_width + self.tile_width // 2, y * self.tile_height))
                     self.all_sprites.add(self.sword)
-                    self.hard = True
+                    self.medium = True
                 elif cell == 6:
                     self.bat = objects.Monster((x * self.tile_width + self.tile_width // 2, y * self.tile_height), "bat")
                     self.monsters.add(self.bat)
                 elif cell == 7:
                     self.skeleton = objects.Monster((x * self.tile_width + self.tile_width // 2, y * self.tile_height), "skeleton")
-                    self.monsters.add(self.skeleton)    
+                    self.monsters.add(self.skeleton)  
+                  
         self.running = True
         while self.running:
             self.screen.fill((255, 255, 255))  # Màu nền trắng
@@ -91,6 +113,7 @@ class Game:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE and not self.started_game:
                         self.started_game = True 
+                        self.recording = True
                         solution, visited_nodes, generated, elapsed_time = get_solution(self.map_matrix, self.algorithm) 
                         self.player.move_player(solution)
                         start_time = time.perf_counter()
@@ -109,7 +132,6 @@ class Game:
                 self.nofication("Press SPACE to start the game")
             else:
                 if solution:
-                    #direction = ""
                     self.display_info(solution, visited_nodes, generated, elapsed_time)
                     if not self.finised_game:
                         moved = self.player.update_auto_move(self.map_matrix)   
@@ -126,7 +148,7 @@ class Game:
                     key_y = self.key.rect.y // self.tile_height
                     player_x = (self.player.rect.x + self.tile_width // 2) // self.tile_width
                     player_y = self.player.rect.y // self.tile_height
-                    if self.hard:
+                    if self.medium:
                         sword_x = (self.sword.rect.x + self.tile_width // 2) // self.tile_width
                         sword_y = self.sword.rect.y // self.tile_height
                         if player_x == sword_x and player_y == sword_y:
@@ -163,7 +185,6 @@ class Game:
                             direction = "right"            
              
                         for monster in self.monsters:
-                            
                             monster_x = (monster.rect.x + self.tile_width // 2) // self.tile_width
                             monster_y = (monster.rect.y + self.tile_height)// self.tile_height
 
@@ -180,6 +201,8 @@ class Game:
                                         self.monsters.remove(monster)
                                         self.player.attacking = False
                                         self.player.set_state(self.player.current_state)
+
+                            monster.draw_health_bar(self.screen)
                        
                     if player_x == self.door_rect.x // self.tile_width and player_y == self.door_rect.y // self.tile_height:
                         self.player.kill()
@@ -190,8 +213,26 @@ class Game:
                     messagebox.showinfo("No Solution", "No solution found for the maze.")
                     self.started_game = False
 
+            if self.started_game:
+                if not hasattr(self, 'frame_skip'):
+                    self.frame_skip = 0
+                self.frame_skip += 1
+
+                if self.frame_skip % 2 == 0:  # Mỗi 3 frame mới lưu 1 lần
+                    surface = pygame.display.get_surface()
+                    buffer = pygame.image.tostring(surface, 'RGB')
+                    image = np.frombuffer(buffer, dtype=np.uint8).reshape((self.HEIGHT, self.WIDTH, 3))
+                    self.gif_frames.append(image)
+
+
             pygame.display.flip()
+
+        # self.save_gif_threaded()
+        # time.sleep(0.5)
         
+        self.save_mp4_threaded()
+        time.sleep(0.5)
+
         pygame.quit()
 
     def draw_map(self):

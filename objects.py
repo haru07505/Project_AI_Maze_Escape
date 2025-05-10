@@ -1,6 +1,8 @@
 from tkinter import messagebox
 import pygame
 from collections import deque
+import random
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, collision_map, tile_width, tile_height):
@@ -138,13 +140,18 @@ class Monster(pygame.sprite.Sprite):
             self.hurt_die_sprites = self.load_hurt_die_sprites("bat_hurt_die.png", num_frames = 17)
         self.index = 0
         self.state = "idle"
-        self.hurt_done = False
-        self.die_done = False
         self.image = self.sprites[self.index]
         self.rect = self.image.get_rect(center=position)
         self.animation_speed = 30
         self.counter = 0
         self.health = 3
+        self.max_health = 3
+        self.health_bar_length = 30  # Chiều dài thanh máu (pixels)
+        self.health_bar_height = 5   # Chiều cao thanh máu
+        self.health_bar_offset_y = -10  # Khoảng cách từ đỉnh quái vật
+        #self.health_bar_color = (0, 255, 0)  # Màu xanh lá cho máu
+        self.health_bar_bg_color = (255, 0, 0)  # Màu đỏ cho nền
+        self.is_alive = True
         self.last_damage_time = 0
         self.damage_cooldown = 800
     def load_idle_sprites(self, file_path, num_frames):
@@ -187,35 +194,69 @@ class Monster(pygame.sprite.Sprite):
         self.counter += 1
         if self.counter >= self.animation_speed:
             self.counter = 0
-            self.index = (self.index + 1) % len(self.sprites)
-            self.image = self.sprites[self.index]
-            if self.state == "hurt":
+            if self.state == "idle":
+                self.index = (self.index + 1) % len(self.sprites)
+                self.image = self.sprites[self.index]
+            elif self.state == "hurt":
+                self.index += 1
                 self.image = self.hurt_die_sprites["hurt"][self.index]
                 if self.index == len(self.hurt_die_sprites["hurt"]) - 1:
                     self.state = "idle"
-                    self.hurt_done = True
+                    self.index = 0
+                    self.image = self.sprites[self.index]
+                else:
+                    self.image = self.hurt_die_sprites["hurt"][self.index]
             elif self.state == "die":
-                self.image = self.hurt_die_sprites["die"][self.index]
+                self.index += 1
                 if self.index == len(self.hurt_die_sprites["die"]) - 1:
-                    self.die_done = True
+                    self.is_alive = False
+                else:
+                    self.image = self.hurt_die_sprites["die"][self.index]
 
     def hurt(self):
         """Xử lý khi bị thương"""
-        if self.health > 0:
+        if self.is_alive and self.health > 0:
             self.health -= 1
             self.state = "hurt"
             self.index = 0
             self.image = self.hurt_die_sprites["hurt"][self.index]
-        else:
-            self.die()
+            if self.health <= 0:
+                self.die()
     
     def die(self):
         """Xử lý khi chết"""
-        self.state = "die"
-        self.index = 0
-        self.image = self.hurt_die_sprites["die"][self.index]
-        # Xóa sprite sau khi chết
-                
+        if self.is_alive:
+            self.state = "die"
+            self.index = 0
+            self.image = self.hurt_die_sprites["die"][self.index]  
+
+    def draw_health_bar(self, surface):
+        """Vẽ thanh máu nếu quái vật còn sống và chưa chạy hết animation chết"""
+        if not self.is_alive and self.state != "die":
+            return
+
+        health_ratio = max(0, self.health / self.max_health)
+        health_width = self.health_bar_length * health_ratio
+
+        # Thay đổi màu theo tỷ lệ máu
+        if health_ratio > 0.6:
+            health_color = (0, 255, 0)  # Xanh lá
+        elif health_ratio > 0.3:
+            health_color = (255, 255, 0)  # Vàng
+        else:
+            health_color = (255, 0, 0)  # Đỏ
+
+        bar_x = self.rect.x + (self.rect.width - self.health_bar_length) // 2
+        bar_y = self.rect.y + self.health_bar_offset_y
+
+        # Vẽ nền
+        pygame.draw.rect(surface, self.health_bar_bg_color,
+                         (bar_x, bar_y, self.health_bar_length, self.health_bar_height))
+        # Vẽ viền (tùy chọn)
+        # Vẽ thanh máu
+        if health_width > 0:
+            pygame.draw.rect(surface, health_color, (bar_x, bar_y, health_width, self.health_bar_height))
+
 class Key(pygame.sprite.Sprite):
     def __init__(self, position):
         super().__init__()
