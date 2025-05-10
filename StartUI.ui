@@ -141,10 +141,10 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>140</y>
-      <width>281</width>
-      <height>281</height>
+      <x>20</x>
+      <y>150</y>
+      <width>341</width>
+      <height>271</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -160,8 +160,8 @@
    <widget class="QPushButton" name="startButton">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>280</y>
+      <x>380</x>
+      <y>260</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -200,8 +200,8 @@
    <widget class="QPushButton" name="exitButton">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>350</y>
+      <x>380</x>
+      <y>330</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -420,7 +420,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="inforButton">
     <property name="geometry">
      <rect>
-      <x>360</x>
+      <x>380</x>
       <y>430</y>
       <width>101</width>
       <height>31</height>
@@ -462,7 +462,7 @@ QPushButton:pressed {
       <x>0</x>
       <y>0</y>
       <width>321</width>
-      <height>201</height>
+      <height>211</height>
      </rect>
     </property>
     <property name="font">

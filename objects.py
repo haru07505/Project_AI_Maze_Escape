@@ -26,7 +26,7 @@ class Player(pygame.sprite.Sprite):
                 if cell == 2:
                     self.rect = self.image.get_rect(center=(x * tile_width + tile_width // 2, y * tile_height))
                     break
-        self.animation_speed = 15
+        self.animation_speed = 5
         self.counter = 0
         self.attacking = False
         #self.has_sword = False

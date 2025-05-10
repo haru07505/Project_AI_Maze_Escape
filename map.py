@@ -39,8 +39,9 @@ class Game:
         self.load_matrix_map()
         self.font = pygame.font.SysFont('Arial', 18)
         self.sword_timer = False
+        self.showed_res = False
 
-        self.gif_frames = []
+        #elf.gif_frames = []
 
     def load_objects(self):
         """ Xử lý objects layer và cập nhật ma trận """
@@ -204,34 +205,35 @@ class Game:
 
                             monster.draw_health_bar(self.screen)
                        
-                    if player_x == self.door_rect.x // self.tile_width and player_y == self.door_rect.y // self.tile_height:
+                    if player_x == self.door_rect.x // self.tile_width and player_y == self.door_rect.y // self.tile_height and not self.showed_res:
+                        messagebox.showinfo("Success", "🎉 Congratulations! You have escaped the maze! 🎉")
                         self.player.kill()
                         self.finised_game = True
                         end_time = time.perf_counter()
-                        self.nofication("You completed the game! Press Enter to Reset or ESC to Exit.")
+                        #messagebox.showinfo("Success", "🎉 Congratulations! You have escaped the maze! 🎉")
+                        self.nofication("Press Enter to Reset or ESC to Exit.")
+                        self.showed_res = True
                 else:
                     messagebox.showinfo("No Solution", "No solution found for the maze.")
                     self.started_game = False
 
-            if self.started_game:
-                if not hasattr(self, 'frame_skip'):
-                    self.frame_skip = 0
-                self.frame_skip += 1
+            # if self.started_game:
+            #     if not hasattr(self, 'frame_skip'):
+            #         self.frame_skip = 0
+            #     self.frame_skip += 1
 
-                if self.frame_skip % 2 == 0:  # Mỗi 3 frame mới lưu 1 lần
-                    surface = pygame.display.get_surface()
-                    buffer = pygame.image.tostring(surface, 'RGB')
-                    image = np.frombuffer(buffer, dtype=np.uint8).reshape((self.HEIGHT, self.WIDTH, 3))
-                    self.gif_frames.append(image)
+            #     # if self.frame_skip % 2 == 0:  # Mỗi 3 frame mới lưu 1 lần
+            #     #     surface = pygame.display.get_surface()
+            #     #     buffer = pygame.image.tostring(surface, 'RGB')
+            #     #     image = np.frombuffer(buffer, dtype=np.uint8).reshape((self.HEIGHT, self.WIDTH, 3))
+            #     #     self.gif_frames.append(image)
 
 
             pygame.display.flip()
 
-        # self.save_gif_threaded()
-        # time.sleep(0.5)
         
-        self.save_mp4_threaded()
-        time.sleep(0.5)
+        # self.save_mp4_threaded()
+        # time.sleep(0.5)
 
         pygame.quit()
 

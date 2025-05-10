@@ -1,6 +1,6 @@
 import sys, pygame
 from playsound import playsound
-from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsPixmapItem
+from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsPixmapItem, QMessageBox
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QPixmap, QPainter
 from PyQt6.QtMultimedia import QSoundEffect
@@ -73,9 +73,12 @@ class MainApp(QMainWindow):
             self.update_level_display(f"level{self.current_level}_image.png")
 
     def next_level(self):
-        self.current_level += 1
-        self.ui.levelLabel.setText(f"Level {self.current_level}")  
-        self.update_level_display(f"level{self.current_level}_image.png")
+        if self.current_level < 3:
+            self.current_level += 1
+            self.ui.levelLabel.setText(f"Level {self.current_level}")  
+            self.update_level_display(f"level{self.current_level}_image.png")
+        else:
+            QMessageBox.information(self, "Notice", "No new level yet!")
 
     def update_level_display(self, file_image):
         self.scene.clear()
