@@ -152,19 +152,19 @@ Không đảm bảo tìm ra giải pháp tối ưu toàn cục.
 
 Các thuật toán như SHC có thể bị kẹt ở một tối ưu cục bộ nếu không có chiến lược làm lạnh thích hợp (như Simulated Annealing).
 
-###### SHC (Simulated Hill Climbing)
+###### SHC (Simple Hill Climbing)
 
-SHC là một thuật toán tìm kiếm cục bộ dùng để tìm tối ưu cục bộ trong không gian trạng thái.
+SHC là một thuật toán tìm kiếm cục bộ đơn giản, trong đó tại mỗi bước, thuật toán chỉ chọn một trạng thái kề tốt hơn trạng thái hiện tại (nếu có) và chuyển đến đó. Thuật toán dừng khi không tìm được trạng thái nào tốt hơn.
 
-Độ tối ưu: Không đảm bảo tìm được tối ưu toàn cục.
+Độ tối ưu: Không đảm bảo tìm được tối ưu toàn cục, dễ rơi vào bẫy tối ưu cục bộ.
 
 Độ phức tạp: O(b^d).
 
-###### SAHC (Simulated Annealing Hill Climbing)
+###### SAHC (Steepest-Ascent Hill Climbing)
 
-SAHC kết hợp giữa SHC và thuật toán làm lạnh mô phỏng (Simulated Annealing) để tránh rơi vào tối ưu cục bộ.
+SAHC là biến thể của SHC, trong đó tại mỗi bước, thuật toán đánh giá tất cả các trạng thái kề và chọn trạng thái có giá trị đánh giá tốt nhất (dốc nhất) để di chuyển.
 
-Độ tối ưu: Có khả năng tìm tối ưu toàn cục.
+Độ tối ưu: Vẫn không đảm bảo tìm được tối ưu toàn cục vì vẫn có thể mắc kẹt tại cực trị cục bộ hoặc cao nguyên.
 
 Độ phức tạp: O(b^d).
 
