@@ -368,7 +368,7 @@ Level 3
 
 ![Bảng thống kê](source_gif/thongkelv3.png)
 
-![Biểu đồ so sánh](BieuDoSoSanh.png)
+![Biểu đồ so sánh](source_gif/BieuDoSoSanh.png)
 
 Qua biểu đồ, ta thấy được có sự khác biệt rõ rệt về hiệu suất mà các thuật toán mang lại khi độ khó của mê cung tăng dần lên. Các thuật toán có xu hướng tốn nhiều thời gian hơn, duyệt và sinh nhiều nút hơn, cùng với độ dài đường đi tăng lên đáng kể.
 
